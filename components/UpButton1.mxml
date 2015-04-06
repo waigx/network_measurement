@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark">
+
+    <fx:Metadata>
+    	[HostComponent("spark.components.Button")]
+    </fx:Metadata> 
+    
+    <s:states>
+        <s:State name="up"/>
+        <s:State name="over"/>
+        <s:State name="down"/>
+        <s:State name="disabled"/>
+    </s:states>
+
+    <!-- background -->
+    <s:Rect x="0.5" width="14" y="0.5" height="17">
+        <s:stroke>
+            <s:SolidColorStroke color="#5380D0" weight="1"/>
+        </s:stroke>
+        <s:fill>
+            <s:SolidColor color="#FFFFFF" color.over="#EBF4FF" color.down="#DEEBFF"/>
+        </s:fill>
+    </s:Rect>
+
+	<!-- shadow (down state only) -->
+	<s:Rect includeIn="down" x="1.5" y="1.5" width="12" height="15">
+		<s:stroke>
+			<s:LinearGradientStroke rotation="90">
+				<s:GradientEntry color="#5380D0" alpha="0.25" ratio="0"/>
+				<s:GradientEntry color="#5380D0" alpha="0" ratio="1"/>
+			</s:LinearGradientStroke>
+		</s:stroke>
+	</s:Rect>
+
+    <!-- arrow -->
+    <s:Path x="3.5" y="5" data="M 4 0 L 7.5 7 0 7 Z">
+        <s:fill>
+            <s:SolidColor color="#4E6290"/>
+        </s:fill>
+    </s:Path>
+
+</s:Skin>

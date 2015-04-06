@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:fc="http://ns.adobe.com/flashcatalyst/2009"
+		 currentState="unknown">
+	<s:states>
+		<s:State name="avaliable" fc:color="0xcc0000"/>
+		<s:State name="not_avaliable"/>
+		<s:State name="unknown"/>
+	</s:states>
+	<s:Ellipse height="19" width="19" x="0.5" y="0.5" id="ellipse1">
+		<s:stroke>
+			<s:SolidColorStroke caps="none" color="#5380D0" joints="miter" miterLimit="4" weight="1"/>
+		</s:stroke>
+		<s:fill.avaliable>
+			<s:SolidColor color="#93F98C"/>
+		</s:fill.avaliable>
+		<s:fill.not_avaliable>
+			<s:SolidColor color="#FF9999"/>
+		</s:fill.not_avaliable>
+		<s:fill.unknown>
+			<s:SolidColor color="#CCCCCC"/>
+		</s:fill.unknown>
+	</s:Ellipse>
+	<fx:Private></fx:Private>
+</s:Group>

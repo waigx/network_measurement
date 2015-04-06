@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:s="library://ns.adobe.com/flex/spark" xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:components="components.*" xmlns:d="http://ns.adobe.com/fxg/2008/dt" autoDrawBackground="false">
+	<fx:Metadata> 
+		[Event(name="ITEM_DETAILS_CLICKED", type="org.igorw.events.DetailsClicked")] 
+	</fx:Metadata> 
+	
+	<fx:Script>
+		<![CDATA[
+			import org.igorw.events.DetailsClicked;
+			
+			protected function details_clickHandler(event:MouseEvent):void
+			{
+				var detailsClickedEvent:DetailsClicked = new DetailsClicked(url.text);
+				this.dispatchEvent(detailsClickedEvent);	
+			}
+		]]>
+	</fx:Script>
+	
+	
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="hovered"/>
+		<s:State name="selected"/>
+	</s:states>
+	
+	<s:Rect height="31" id="rect2" width="484" x="0" y="0">
+		<s:fill>
+			<s:SolidColor color="#FFFFFF"/>
+		</s:fill>
+		<s:fill.hovered>
+			<s:LinearGradient rotation="90">
+				<s:GradientEntry color="#FFFFFF" alpha="1" ratio="0"/>
+				<s:GradientEntry color="#EBF7FF" alpha="1.0" ratio="1"/>
+			</s:LinearGradient>
+		</s:fill.hovered>
+		<s:fill.selected>
+			<s:LinearGradient rotation="90">
+				<s:GradientEntry color="#E0F3FF" alpha="1.0" ratio="0"/>
+				<s:GradientEntry color="#FFFFFF" alpha="1.0" ratio="1"/>
+			</s:LinearGradient>
+		</s:fill.selected>
+	</s:Rect>
+	<s:Rect height="31" id="rect0" width="484" x="0.5" y="0.5">
+		<s:stroke>
+			<s:SolidColorStroke caps="none" color="#5380D0" joints="miter" miterLimit="4" weight="1"/>
+		</s:stroke>
+	</s:Rect>
+	<components:is_available id="is_available" x="314" y="6" currentState="{data.is_available}">
+	</components:is_available>
+	<s:Button id="details" label="Details" skinClass="components.details" x="406" y="5" click="details_clickHandler(event)"/>
+	<s:RichText color="#2B4381" fontFamily="Helvetica" fontSize="14" id="url" tabStops="S0 S50 S100 S150 S200 S250"
+				text="{data.url}" width="291" x="7" y="9"/>
+	<s:RichText color="#2B4381" fontFamily="Helvetica" fontSize="14" id="richtext2" tabStops="S0"
+				text="{data.ping}" textAlign="center" width="46" x="343" y="9"/>
+	<s:Rect alpha="0" height="32" id="rect1" includeIn="normal" d:userLabel="Item Highlight Rectangle" width="485">
+		<s:fill>
+			<s:SolidColor color="0xCED7EE"/>
+		</s:fill>
+	</s:Rect>
+</s:ItemRenderer>

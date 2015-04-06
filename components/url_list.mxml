@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:s="library://ns.adobe.com/flex/spark" xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:components="components.*" xmlns:d="http://ns.adobe.com/fxg/2008/dt">
+	<fx:Metadata>[HostComponent("spark.components.List")]</fx:Metadata>
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="disabled"/>
+	</s:states>
+	<s:Rect height="349" width="514" x="0.5" y="0.5">
+		<s:stroke>
+			<s:SolidColorStroke caps="none" color="#5380D0" joints="miter" miterLimit="4" weight="1"/>
+		</s:stroke>
+		<s:fill>
+			<s:SolidColor color="#FFFFFF"/>
+		</s:fill>
+	</s:Rect>
+	<s:Rect height="32" id="rect2" includeIn="disabled" width="485" x="7" y="7">
+		<s:fill>
+			<s:SolidColor color="#FFFFFF"/>
+		</s:fill>
+	</s:Rect>
+	<s:Rect alpha="0" height="32" id="rect1" includeIn="disabled" d:userLabel="Item Highlight Rectangle" width="485" x="7" y="7"/>
+	<s:VScrollBar height="350" width="15" x="500" y="0" viewport="{dataGroup}"/>
+	<s:DataGroup clipAndEnableScrolling="true" height="339" id="dataGroup" includeIn="normal" itemRenderer="components.RepeatedItem4" width="490" x="5" y="6">
+		<s:layout>
+			<s:VerticalLayout/>
+		</s:layout>
+	</s:DataGroup>
+	<s:transitions>
+		<s:Transition autoReverse="true" fromState="disabled" toState="normal"/>
+		<s:Transition autoReverse="true" fromState="normal" toState="disabled">
+			<s:Parallel>
+				<s:Parallel target="{rect2}">
+					<s:Fade duration="0"/>
+				</s:Parallel>
+				<s:Parallel target="{dataGroup}">
+					<s:Fade duration="0"/>
+				</s:Parallel>
+			</s:Parallel>
+		</s:Transition>
+	</s:transitions>
+</s:Skin>

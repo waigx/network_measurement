@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   xmlns:d="http://ns.adobe.com/fxg/2008/dt"
+					   xmlns:fc="http://ns.adobe.com/flashcatalyst/2009"
+					   xmlns:components="components.*"
+					   showStatusBar="false"
+					   height="600" width="800" creationComplete="windowedapplication1_creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			import org.igorw.ExecExternal;
+			import org.igorw.events.DetailsClicked;
+			
+			public var args:Vector.<String> = new Vector.<String>();
+			public var exec:ExecExternal;
+			protected function windowedapplication1_creationCompleteHandler(event:FlexEvent):void
+			{
+				var path:String = File.applicationDirectory.resolvePath("scripts/test.sh").nativePath;
+				trace(path);
+				exec = new ExecExternal(path);
+				args.push("www.google.com");
+				exec.args = args;
+				exec.name = "ping";
+				exec.run();
+				exec.addEventListener("ping_OUT_SUCCESS", outputHandler);
+				this.addEventListener(DetailsClicked.DETAILS_CLICKED, detailsClickedHandler);
+			}
+			
+			protected function outputHandler(event:Event):void
+			{
+				result.text = exec.output;
+			}
+			
+			protected function detailsClickedHandler(event:DetailsClicked):void
+			{
+				trace(event.url);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Style source="Main.css"/>
+	<fx:DesignLayer d:userLabel="Layer 1">
+		<s:List skinClass="components.url_list" x="141" y="105">
+			<s:ArrayCollection>
+				<fx:Object url="www.example.com" ping="200ms" is_available="avaliable"/>
+				<fx:Object url="www.google.com" ping="300ms" is_available="not_avaliable"/>
+				<fx:Object url="www.youtube.com" ping="100ms" is_available="unknown"/>
+				<fx:Object url="www.app.com" is_available="unknown"/>
+				<fx:Object url="www.igorw.org" is_available="unknown"/>
+				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
+				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
+				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
+				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
+				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
+			</s:ArrayCollection>
+		</s:List>
+		<s:TextArea id="result" x="141" y="488" width="515" height="98"/>
+	</fx:DesignLayer>
+</s:WindowedApplication>
