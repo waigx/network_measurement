@@ -4,8 +4,9 @@
 		 xmlns:fc="http://ns.adobe.com/flashcatalyst/2009"
 		 currentState="unknown">
 	<s:states>
-		<s:State name="avaliable" fc:color="0xcc0000"/>
+		<s:State name="avaliable"/>
 		<s:State name="not_avaliable"/>
+		<s:State name="problematic"/>
 		<s:State name="unknown"/>
 	</s:states>
 	<s:Ellipse height="19" width="19" x="0.5" y="0.5" id="ellipse1">
@@ -18,6 +19,9 @@
 		<s:fill.not_avaliable>
 			<s:SolidColor color="#FF9999"/>
 		</s:fill.not_avaliable>
+		<s:fill.problematic>
+			<s:SolidColor color="#FFCC00"/>
+		</s:fill.problematic>
 		<s:fill.unknown>
 			<s:SolidColor color="#CCCCCC"/>
 		</s:fill.unknown>

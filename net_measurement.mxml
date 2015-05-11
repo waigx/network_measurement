@@ -6,60 +6,254 @@
 					   xmlns:fc="http://ns.adobe.com/flashcatalyst/2009"
 					   xmlns:components="components.*"
 					   showStatusBar="false"
-					   height="600" width="800" creationComplete="windowedapplication1_creationCompleteHandler(event)">
+					   height="600" width="800" currentState="list"
+					   creationComplete="windowedapplication_creationCompleteHandler(event)" xmlns:objs="objs.*">
+	
 	<fx:Script>
 		<![CDATA[
+			import flash.events.*;
+			import flash.net.*;
+			
 			import mx.events.FlexEvent;
 			
 			import org.igorw.ExecExternal;
+			import org.igorw.ResolveDNS;
 			import org.igorw.events.DetailsClicked;
 			
-			public var args:Vector.<String> = new Vector.<String>();
+			import spark.events.IndexChangeEvent;
+			
+			public static var SIZE_QUERY_SERVER:String = "http://dpkg.me:6434/";
+			public var args:Vector.<String>;
 			public var exec:ExecExternal;
-			protected function windowedapplication1_creationCompleteHandler(event:FlexEvent):void
+			public var resolveDNS:ResolveDNS;
+			public var loader:URLLoader;
+			public var selectedURL:String;
+			public var queryStage:String;
+			public var remoteSize:int;
+			public var localSize:int;
+			
+			private function process_url(url:String):String
 			{
-				var path:String = File.applicationDirectory.resolvePath("scripts/test.sh").nativePath;
-				trace(path);
-				exec = new ExecExternal(path);
-				args.push("www.google.com");
-				exec.args = args;
-				exec.name = "ping";
-				exec.run();
-				exec.addEventListener("ping_OUT_SUCCESS", outputHandler);
+				if ((url.search("https://") == 0) || (url.search("http://") == 0)){
+					return url;
+				}
+				return "http://" + url;
+			}
+			
+			protected function windowedapplication_creationCompleteHandler(event:FlexEvent):void
+			{
 				this.addEventListener(DetailsClicked.DETAILS_CLICKED, detailsClickedHandler);
 			}
 			
 			protected function outputHandler(event:Event):void
 			{
-				result.text = exec.output;
+				pingTraceroute.textFlow.textAlign = "left";
+				pingTraceroute.textFlow.verticalAlign = "top";
+				pingTraceroute.text = exec.output;
 			}
 			
 			protected function detailsClickedHandler(event:DetailsClicked):void
 			{
-				trace(event.url);
+				this.currentState = "detailed";
+				pingTraceroute.text = "Collecting data...";
+				pingTraceroute.textFlow.textAlign = "center";
+				pingTraceroute.textFlow.verticalAlign = "middle";
+
+				var path:String = File.applicationDirectory.resolvePath("scripts/test.sh").nativePath;
+				exec = new ExecExternal(path);
+				args = new Vector.<String>();
+
+				args.push(event.url);
+				exec.args = args;
+				exec.name = "ping";
+				exec.run();
+				exec.addEventListener("ping_OUT_SUCCESS", outputHandler);
+			}
+			
+			protected function back_clickHandler(event:MouseEvent):void
+			{
+				this.currentState = "list";
+			}
+			
+			protected function select_url_Handler(event:IndexChangeEvent):void
+			{
+				DNSInfo.text = "Collecting data...";
+				DNSInfo.textFlow.textAlign = "center";
+				DNSInfo.textFlow.verticalAlign = "middle";
+				
+				webFilterInfo.text = "Collecting data...";
+				webFilterInfo.textFlow.textAlign = "center";
+				webFilterInfo.textFlow.verticalAlign = "middle";
+				
+				HTTPInfo.text = "Collecting data...";
+				HTTPInfo.textFlow.textAlign = "center";
+				HTTPInfo.textFlow.verticalAlign = "middle";
+				
+				queryStage = "DNS";
+				
+				var selItems:Vector.<Object> = event.currentTarget.selectedItems;
+				selectedURL = new String(selItems[0].url);
+				resolveDNS = new ResolveDNS(selectedURL);
+				resolveDNS.addEventListener("DNS_RESOLVE_COMPLETE", resolveDNSCompleteHandler);
+				resolveDNS.resolve();
+			}
+			
+			protected function resolveDNSCompleteHandler(event:Event):void
+			{	
+				DNSInfo.text = "";
+				DNSInfo.textFlow.textAlign = "left";
+				DNSInfo.textFlow.verticalAlign = "top";
+				
+				DNSInfo.text += resolveDNS.result;
+				DNSInfo.text += "\n";
+				resolveDNS.removeEventListener("DNS_RESOLVE_COMPLETE", resolveDNSCompleteHandler);
+				
+				loader = new URLLoader();
+				configureListeners(loader);
+				var request:URLRequest = new URLRequest(SIZE_QUERY_SERVER + selectedURL);
+				try {
+					loader.load(request);
+					queryStage = "REMOTE";
+				} catch (error:Error) {
+					trace("Unable to load requested document.");
+				}
+			}
+			
+			private function configureListeners(dispatcher:IEventDispatcher):void {
+				dispatcher.addEventListener(Event.COMPLETE, completeHandler);
+				//dispatcher.addEventListener(Event.OPEN, openHandler);
+				//dispatcher.addEventListener(ProgressEvent.PROGRESS, progressHandler);
+				//dispatcher.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+				dispatcher.addEventListener(HTTPStatusEvent.HTTP_STATUS, httpStatusHandler);
+				dispatcher.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+			}
+			
+			private function httpStatusHandler(event:HTTPStatusEvent):void {
+				HTTPInfo.text = "";
+				HTTPInfo.textFlow.textAlign = "left";
+				HTTPInfo.textFlow.verticalAlign = "top";
+				
+				HTTPInfo.text += "Redirected: " + String(event.redirected) + "\n";
+				HTTPInfo.text += "Response URL: " + String(event.responseURL) + "\n";
+				HTTPInfo.text += "Status: " + String(event.status) + "\n";
+				HTTPInfo.text += "Response Headers: " + String(event.responseHeaders) + "\n";
+				
+				return;
+			}
+			
+			private function completeHandler(event:Event):void {
+				var loader:URLLoader;
+				if (queryStage == "REMOTE"){
+					
+					webFilterInfo.text = "";
+					webFilterInfo.textFlow.textAlign = "left";
+					webFilterInfo.textFlow.verticalAlign = "top";
+					
+					loader = URLLoader(event.target);
+					webFilterInfo.text += "Remote Size: " + String(loader.data) + "\n";
+					remoteSize = int(loader.data);
+					
+					loader = new URLLoader();
+					configureListeners(loader);
+					var request:URLRequest = new URLRequest(process_url(selectedURL));
+					try {
+						loader.load(request);
+						queryStage = "LOCAL";
+					} catch (error:Error) {
+						trace("Unable to load requested document.");
+					}
+				} else {
+					loader = URLLoader(event.target);
+					webFilterInfo.text += "Local size: " + String(loader.data.length) + "\n";
+					localSize = loader.data.length;
+					var temp:int = 100 * Math.abs(localSize-remoteSize)/Math.max(localSize, remoteSize);
+					webFilterInfo.text += "\n" + "Length Diff: " + String(temp) + "%";
+				}
+				
+				DNSInfo.text += "\n";
+			}
+			
+			private function ioErrorHandler(event:IOErrorEvent):void {
+				trace("ioErrorHandler: " + event);
 			}
 			
 		]]>
 	</fx:Script>
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<!-- http://dpkg.me:6434/ -->
 	</fx:Declarations>
 	<fx:Style source="Main.css"/>
+	<s:states>
+		<s:State name="list"/>
+		<s:State name="detailed"/>
+		<s:State name="setting"/>
+	</s:states>
+	
 	<fx:DesignLayer d:userLabel="Layer 1">
-		<s:List skinClass="components.url_list" x="141" y="105">
+	</fx:DesignLayer>
+	<s:VGroup includeIn="setting" x="167" y="213" width="466" height="195">
+		<s:HGroup width="100%" height="27" verticalAlign="middle">
+			<s:Label text="Sensitivity"/>
+			<s:HSlider width="90%"/>
+		</s:HGroup>
+		<s:Group height="70%" width="100%"/>
+		<s:HGroup width="100%" height="27" verticalAlign="middle">
+			<s:Label text="URL List Source"/>
+			<s:TextInput width="75%"/>
+		</s:HGroup>
+	</s:VGroup>
+	<s:Panel includeIn="list" x="10" y="10" width="558" height="417" title="URL List">
+		<s:List includeIn="list" x="21" y="10" useVirtualLayout="false"
+				skinClass="components.url_list"
+				change="select_url_Handler(event)">
 			<s:ArrayCollection>
-				<fx:Object url="www.example.com" ping="200ms" is_available="avaliable"/>
-				<fx:Object url="www.google.com" ping="300ms" is_available="not_avaliable"/>
-				<fx:Object url="www.youtube.com" ping="100ms" is_available="unknown"/>
-				<fx:Object url="www.app.com" is_available="unknown"/>
-				<fx:Object url="www.igorw.org" is_available="unknown"/>
-				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
-				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
-				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
-				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
-				<fx:Object url="www.example.com" ping="200ms" is_available="unknown"/>
+				<objs:NMData url="google.com"/>
+				<objs:NMData url="facebook.com"/>
+				<objs:NMData url="youtube.com"/>
+				<objs:NMData url="yahoo.com"/>
+				<objs:NMData url="baidu.com"/>
+				<objs:NMData url="amazon.com"/>
+				<objs:NMData url="wikipedia.org/1234"/>
+				<objs:NMData url="cs.stonybrook"/>
+				<objs:NMData url="stonybrook.edu"/>
+				<objs:NMData url="taobao.com"/>
+				<objs:NMData url="twitter.com"/>
+				<objs:NMData url="google.co.in"/>
+				<objs:NMData url="live.com"/>
+				<objs:NMData url="sina.com.cn"/>
+				<objs:NMData url="linkedin.com"/>
+				<objs:NMData url="weibo.com"/>
+				<objs:NMData url="yahoo.co.jp"/>
+				<objs:NMData url="tmall.com"/>
+				<objs:NMData url="ebay.com"/>
+				<objs:NMData url="google.co.jp"/>
+				<objs:NMData url="blogspot.com"/>
+				<objs:NMData url="http://megaupload.com"/>
+
 			</s:ArrayCollection>
 		</s:List>
-		<s:TextArea id="result" x="141" y="488" width="515" height="98"/>
-	</fx:DesignLayer>
+	</s:Panel>
+	<s:Panel includeIn="list" x="10" y="440" width="558" height="147" title="DNS Result">
+		<s:TextArea id="DNSInfo" includeIn="list" color="#2B4381" fontFamily="Helvetica"
+					editable="false" fontSize="18"
+					x="10" y="10" width="536" height="93"/>
+	</s:Panel>
+	<s:Panel includeIn="list" x="576" y="10" width="214" height="417" title="Web-filtering Info.">
+		<s:TextArea id="webFilterInfo" x="13" y="10" width="185" height="349"
+					color="#2B4381" fontFamily="Helvetica"
+					editable="false" fontSize="18"/>
+	</s:Panel>
+	<s:Panel includeIn="list" x="575" y="440" width="214" height="147" title="HTTP Status">
+		<s:TextArea id="HTTPInfo" x="13" y="10" width="185" height="93"
+					color="#2B4381" fontFamily="Helvetica"
+					editable="false" fontSize="18"/>
+	</s:Panel>
+	<s:Panel includeIn="detailed" x="30" y="36" width="742" height="533" title="Detailed View">
+		<s:Button includeIn="detailed" x="21" y="468" width="698" label="Back"
+				  click="back_clickHandler(event)"/>
+		<s:TextArea id="pingTraceroute" includeIn="detailed" x="21" y="14" width="698" height="446"
+					color="#2B4381" editable="false" fontFamily="Helvetica" fontSize="18"/>
+	</s:Panel>
+	
 </s:WindowedApplication>

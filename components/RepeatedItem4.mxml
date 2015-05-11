@@ -1,18 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:ItemRenderer xmlns:s="library://ns.adobe.com/flex/spark" xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:components="components.*" xmlns:d="http://ns.adobe.com/fxg/2008/dt" autoDrawBackground="false">
+<s:ItemRenderer xmlns:s="library://ns.adobe.com/flex/spark"
+				xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:components="components.*"
+				xmlns:d="http://ns.adobe.com/fxg/2008/dt"
+				autoDrawBackground="false"
+				creationComplete="item_creationCompleteHandler(event)">
 	<fx:Metadata> 
 		[Event(name="ITEM_DETAILS_CLICKED", type="org.igorw.events.DetailsClicked")] 
 	</fx:Metadata> 
 	
 	<fx:Script>
 		<![CDATA[
+			import flash.utils.getTimer;
+			
+			import mx.events.FlexEvent;
+			
 			import org.igorw.events.DetailsClicked;
+			
+			private var loader:URLLoader;
+			private var startTime:int;
+			
+			private function configureListeners(dispatcher:IEventDispatcher):void {
+//				dispatcher.addEventListener(Event.COMPLETE, completeHandler);
+//				dispatcher.addEventListener(Event.OPEN, openHandler);
+//				dispatcher.addEventListener(ProgressEvent.PROGRESS, progressHandler);
+//				dispatcher.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+				dispatcher.addEventListener(HTTPStatusEvent.HTTP_STATUS, httpStatusHandler);
+				dispatcher.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+			}
+			
+			private function httpStatusHandler(event:HTTPStatusEvent):void {
+				var timeElapsed:int = getTimer() - startTime;
+				data.delay = String(timeElapsed) + "ms";
+				trace(event);
+				if (event.status == 0){
+					data.state = "not_avaliable";
+					data.delay = "N/A";
+					return;
+				}
+				if (event.status == 200){
+					data.state = "avaliable";
+				} else {
+					data.state = "problematic";
+				}
+				return;
+			}
+			
+			private function ioErrorHandler(event:IOErrorEvent):void {
+				trace("ioErrorHandler: " + event);
+			}
+			
+			private function process_url(url:String):String
+			{
+				if ((url.search("https://") == 0) || (url.search("http://") == 0)){
+					return url;
+				}
+				return "http://" + url;
+			}
+			
+			private function urlrequest(url:String):void {
+				loader = new URLLoader();
+				configureListeners(loader);
+				var request:URLRequest = new URLRequest(process_url(url));
+				try {
+					loader.load(request);
+					startTime = getTimer();
+				} catch (error:Error) {
+					trace("Unable to load requested document.");
+				}
+			}
 			
 			protected function details_clickHandler(event:MouseEvent):void
 			{
 				var detailsClickedEvent:DetailsClicked = new DetailsClicked(url.text);
 				this.dispatchEvent(detailsClickedEvent);	
 			}
+			
+			protected function item_creationCompleteHandler(event:FlexEvent):void
+			{
+				var url:String = this.url.text;
+				urlrequest(url);
+			}
+			
+	
 		]]>
 	</fx:Script>
 	
@@ -45,13 +114,12 @@
 			<s:SolidColorStroke caps="none" color="#5380D0" joints="miter" miterLimit="4" weight="1"/>
 		</s:stroke>
 	</s:Rect>
-	<components:is_available id="is_available" x="314" y="6" currentState="{data.is_available}">
-	</components:is_available>
+	<components:is_available id="is_available" x="304" y="6" currentState="{data.state}" />
 	<s:Button id="details" label="Details" skinClass="components.details" x="406" y="5" click="details_clickHandler(event)"/>
 	<s:RichText color="#2B4381" fontFamily="Helvetica" fontSize="14" id="url" tabStops="S0 S50 S100 S150 S200 S250"
 				text="{data.url}" width="291" x="7" y="9"/>
-	<s:RichText color="#2B4381" fontFamily="Helvetica" fontSize="14" id="richtext2" tabStops="S0"
-				text="{data.ping}" textAlign="center" width="46" x="343" y="9"/>
+	<s:RichText color="#2B4381" fontFamily="Helvetica" fontSize="14" id="timeElapsed" tabStops="S0"
+				text="{data.delay}" textAlign="center" width="56" x="333" y="9"/>
 	<s:Rect alpha="0" height="32" id="rect1" includeIn="normal" d:userLabel="Item Highlight Rectangle" width="485">
 		<s:fill>
 			<s:SolidColor color="0xCED7EE"/>
